@@ -1,0 +1,5 @@
+google-cloud-aiplatform[agent_engines,adk]>=1.88
+vertexai>=1.38.0
+flask==2.3.3
+functions-framework==3.5.0
+gunicorn==22.0.0
