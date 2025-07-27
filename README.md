@@ -1,258 +1,144 @@
-# Sahayak Agent - Educational Assistant
+# Sahayak AI - Educational Assistant
 
-An intelligent educational assistant built with Google's ADK (Agent Development Kit) that provides culturally relevant learning experiences through story-based explanations and practice worksheets.
+An intelligent educational assistant that creates NCERT-based educational content with cultural personalization for Indian students.
 
 ## Features
 
-### 1. Story-Based Explanations
-- **Cultural Relevance**: Stories are personalized based on user's location and language
-- **Educational Content**: Integrates NCERT textbook content seamlessly into narratives
-- **Local Context**: Uses Google Search to incorporate local festivals, traditions, and cultural references
-- **Multi-language Support**: Can generate stories in user's preferred language
+### 🎯 **Content Generation**
+- **Quiz Creator**: Generates multiple-choice quizzes with automatic answer keys
+- **Worksheet Generator**: Creates practice worksheets with detailed solutions
+- **Lesson Plan Builder**: Develops structured lesson plans following NEP 2020 guidelines
+- **Educational Stories**: Crafts culturally relevant stories to explain complex concepts
 
-### 2. Worksheet Generator
-- **NCERT-Based Content**: Sources questions from official NCERT textbooks using Vertex AI Search
-- **Structured Output**: Generates questions in standardized JSON format
-- **DOCX Creation**: Converts JSON to professionally formatted Word documents
-- **Cloud Storage**: Automatically uploads worksheets to Google Cloud Storage
-- **Public Access**: Returns shareable download links
+### 🖼️ **Visual & Media Content**
+- **Image Generation**: Creates educational diagrams and illustrations using Vertex AI Imagen
+- **Video Generation**: Produces educational videos using Google's Veo 3.0 model
+- **Simple Diagrams**: Generates line drawings and flowcharts for concept visualization
 
-## Architecture
+### 🔍 **Content Search & Retrieval**
+- **NCERT Integration**: Searches through Grade 6 Math, Science, and Social Science textbooks
+- **Dual Search System**: Combines Vertex AI Search (NCERT content) + Google Search (general knowledge)
+- **Context-Aware Responses**: Provides relevant information based on curriculum requirements
 
-```
-┌─────────────────┐
-│   Root Agent    │  (Orchestrates between specialized agents)
-│   (Sahayak)     │
-└─────────────────┘
-         │
-    ┌────┴────┐
-    │         │
-┌───▼───┐ ┌──▼──────┐
-│Story  │ │Worksheet│
-│Agent  │ │ Agent   │
-└───────┘ └─────────┘
-    │         │
-    │    ┌────▼─────┐
-    │    │Worksheet │
-    │    │Generator │
-    │    └────┬─────┘
-    │         │
-┌───▼────┐ ┌──▼─────┐
-│Vertex  │ │Google  │
-│AI      │ │Cloud   │
-│Search  │ │Storage │
-└────────┘ └────────┘
-```
+### 🎨 **Cultural Personalization**
+- **Location-Based Adaptation**: Tailors content using local examples, festivals, and traditions
+- **Multi-Language Support**: Generates content in multiple Indian languages
+- **Regional Context**: Incorporates geographical and cultural references from user's location
 
-## Project Structure
+### ⚡ **Structured Output Generation**
+- **JSON Schema Validation**: Uses Pydantic models for consistent data structure
+- **Gemini Structured Output**: Leverages Google's Gemini API with response schemas
+- **Automatic Format Conversion**: Converts structured data to professional DOCX documents
 
-```
-gcp-hackathon/
-├── sahayak_agent/
-│   ├── __init__.py
-│   ├── agent.py          # Main agent definitions
-│   ├── utils.py          # Utility functions for DOCX and cloud storage
-│   └── config.py         # Configuration settings
-├── textbooks/            # NCERT textbook PDFs
-│   └── grade_6/
-│       ├── maths/
-│       ├── science/
-│       └── social_science/
-├── main.py               # Demo and usage examples
-├── requirements.txt      # Original dependencies
-├── additional_requirements.txt  # New dependencies needed
-└── README.md            # This file
-```
+### 📁 **Document Management**
+- **Cloud Storage Integration**: Automatically uploads generated documents to Google Cloud Storage
+- **Public Access Links**: Provides shareable download URLs for all generated content
+- **Multiple Formats**: Supports DOCX for documents, PNG for images, MP4 for videos
 
-## Setup Instructions
+### 🔄 **Session Management**
+- **Persistent Conversations**: Maintains context across multiple interactions
+- **User-Specific Sessions**: Tracks individual user preferences and history
+- **Streaming Responses**: Real-time content generation with live updates
 
-### 1. Install Dependencies
+### 🛡️ **Safety & Quality**
+- **Content Moderation**: Built-in safety filters for educational appropriateness
+- **Citation Cleaning**: Removes unwanted citation markers and formatting artifacts
+- **Error Handling**: Graceful fallbacks when tools or APIs fail
 
-First, install the additional required packages:
+### 🌐 **API Integration**
+- **RESTful API**: HTTP endpoints for creating sessions and streaming queries
+- **Firebase Authentication**: Secure user authentication with JWT tokens
+- **Cloud Functions**: Serverless deployment for scalable access
 
+### 📚 **Educational Standards**
+- **NCERT Curriculum Aligned**: Content strictly follows official Indian curriculum
+- **Grade-Appropriate Language**: Adjusts complexity based on student grade level
+- **NEP 2020 Compliance**: Lesson plans follow National Education Policy guidelines
+
+## Quick Start
+
+### Installation
 ```bash
-# In your virtual environment
-pip install python-docx google-cloud-storage
+pip install google-cloud-aiplatform[agent_engines,adk]>=1.88
+pip install vertexai>=1.38.0 python-docx python-dotenv
 ```
 
-### 2. Google Cloud Configuration
-
-1. **Set up Google Cloud Storage**:
-   ```bash
-   # Create a bucket for worksheets
-   gsutil mb gs://sahayak-worksheets
-   
-   # Make bucket publicly readable (optional)
-   gsutil iam ch allUsers:objectViewer gs://sahayak-worksheets
-   ```
-
-2. **Configure Authentication**:
-   ```bash
-   # Set up application default credentials
-   gcloud auth application-default login
-   
-   # Or set the environment variable
-   export GOOGLE_APPLICATION_CREDENTIALS="path/to/your/service-account-key.json"
-   ```
-
-3. **Vertex AI Search Setup**:
-   - Ensure your Vertex AI Search datastore is properly configured
-   - Update the `DATASTORE_ID` in `config.py` if needed
-
-### 3. Configuration
-
-Update the configuration in `sahayak_agent/config.py`:
-
-```python
-# Update these values for your project
-PROJECT_ID = "your-project-id"
-BUCKET_NAME = "your-bucket-name"
-DATASTORE_ID = "your-datastore-id"
+### Configuration
+```env
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_LOCATION=us-central1
+GOOGLE_CLOUD_DATASTORE_ID=your-ncert-datastore-id
+GOOGLE_CLOUD_BUCKET_ID=sahayak-user-documents
 ```
 
-## Usage
+### Usage Examples
 
-### Basic Usage
-
-```python
-from sahayak_agent.agent import root_agent, story_agent, worksheet_agent
-
-# For story generation
-story_response = story_agent.run(
-    "Tell me a story about the solar system. I'm from Mumbai and prefer Hindi and English."
-)
-
-# For worksheet generation  
-worksheet_response = worksheet_agent.run(
-    "Create a worksheet on fractions for grade 6 math."
-)
+**Generate a Quiz:**
+```
+"Create a 10-question quiz on photosynthesis for grade 6 science"
+→ Returns: DOCX file with multiple-choice questions and answer key
 ```
 
-### Story Agent Usage
-
-The story agent requires:
-- **Topic/Theme**: What educational concept to explain
-- **Location**: User's city/country for cultural context
-- **Language**: Preferred language for the story
-
-**Example Interaction**:
+**Create a Worksheet:**
 ```
-User: "Explain photosynthesis through a story"
-Agent: "To create a culturally relevant story, please provide your location (city/country) and preferred language."
-User: "I'm from Bangalore, India. Please use English with some Kannada words."
-Agent: [Generates story incorporating Bangalore's gardens, local festivals, and Kannada cultural elements]
+"Generate a worksheet on fractions with step-by-step solutions"
+→ Returns: DOCX file with practice problems and detailed explanations
 ```
 
-### Worksheet Agent Usage
-
-The worksheet agent requires:
-- **Subject**: math, science, social_science, etc.
-- **Topic**: Specific chapter or concept
-- **Grade** (optional): Default is grade 6
-
-**Example Interaction**:
+**Build a Lesson Plan:**
 ```
-User: "I need a worksheet on fractions"
-Agent: "Please provide the subject and specific topic for the worksheet."
-User: "Math, Chapter 7 - Fractions, Grade 6"
-Agent: [Searches NCERT content, generates JSON, creates DOCX, uploads to cloud]
-       "Worksheet created successfully! Download link: https://storage.googleapis.com/sahayak-worksheets/worksheets/worksheet_20250723_143052.docx"
+"Create a lesson plan for teaching the solar system to grade 6 students"
+→ Returns: Structured lesson plan following NEP 2020 guidelines
 ```
 
-## JSON Format for Worksheets
+**Generate Educational Content:**
+```
+"Explain the water cycle through a story set in Mumbai"
+→ Returns: Culturally relevant story incorporating local context
+```
 
-The system uses a standardized JSON format:
+**Create Visual Content:**
+```
+"Generate a diagram showing parts of a plant"
+→ Returns: Educational illustration with labeled components
+```
 
-```json
+## API Endpoints
+
+### Create Session
+```http
+POST /create_session
+Content-Type: application/json
+
 {
-  "Worksheet title": "Fractions - Chapter 7",
-  "Worksheet subtitle": "Understanding Fractions and Their Operations", 
-  "Questions": [
-    {
-      "Question": "What is 3/4 + 1/4?",
-      "Option 1": "4/4",
-      "Option 2": "1", 
-      "Option 3": "4/8",
-      "Option 4": "Both A and B",
-      "Correct Answer": "Option 4"
-    }
-  ]
+  "user_id": "student_123"
 }
 ```
 
-## API Reference
+### Stream Educational Content
+```http
+POST /stream_query
+Content-Type: application/json
 
-### WorksheetGenerator Class
-
-```python
-class WorksheetGenerator:
-    def __init__(self, project_id: str, bucket_name: str)
-    def create_docx_from_json(self, worksheet_data: Dict[str, Any]) -> str
-    def upload_to_cloud_storage(self, local_file_path: str) -> str
+{
+  "user_id": "student_123",
+  "session_id": "session_xyz",
+  "message": "Create a quiz on atoms and molecules",
+  "location": "Delhi, India",
+  "language": "en"
+}
 ```
 
-### Utility Functions
+## Technical Architecture
 
-```python
-def generate_worksheet_tool(topic: str, subject: str = None, grade: str = "6") -> str
-def process_worksheet_json(worksheet_json: str, project_id: str, bucket_name: str) -> str
-def format_cultural_story_prompt(topic: str, location: str, language: str) -> str
-```
-
-## Best Practices
-
-### For Story Generation:
-1. Always provide specific location for better cultural relevance
-2. Specify language preferences clearly
-3. Include grade level or age group when possible
-4. Ask for specific educational topics from NCERT curriculum
-
-### For Worksheet Generation:
-1. Be specific about the subject and topic
-2. Mention the grade level for appropriate difficulty
-3. Allow time for cloud upload completion
-4. Check that download links are accessible
-
-### For Development:
-1. Use the configuration system for environment-specific settings
-2. Handle errors gracefully, especially for cloud operations
-3. Implement proper logging for debugging
-4. Test with various topics and cultural contexts
-
-## Troubleshooting
-
-### Common Issues:
-
-1. **Import Errors**:
-   ```bash
-   pip install python-docx google-cloud-storage
-   ```
-
-2. **Authentication Errors**:
-   ```bash
-   gcloud auth application-default login
-   ```
-
-3. **Bucket Access Errors**:
-   - Ensure bucket exists and is accessible
-   - Check IAM permissions for storage operations
-
-4. **Vertex AI Search Errors**:
-   - Verify datastore ID is correct
-   - Ensure proper API permissions
-
-## Contributing
-
-1. Follow the existing code structure
-2. Add comprehensive docstrings
-3. Test with various cultural contexts
-4. Update configuration as needed
-5. Maintain backward compatibility
-
-## License
-
-This project is part of a GCP Hackathon submission.
+- **Agent Framework**: Google ADK (Agent Development Kit)
+- **LLM Models**: Gemini 2.0 Flash, Gemini 2.5 Pro
+- **Search**: Vertex AI Search + Google Search API
+- **Media Generation**: Imagen 4.0, Veo 3.0
+- **Storage**: Google Cloud Storage
+- **Deployment**: Google Cloud Functions
+- **Authentication**: Firebase Auth with JWT tokens
 
 ---
 
-For questions or issues, please refer to the configuration validation in `config.py` or check the demo examples in `main.py`.
+**Sahayak AI** - Empowering Indian education with AI-powered, culturally relevant content generation.
