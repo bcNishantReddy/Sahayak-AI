@@ -53,7 +53,10 @@ export default function AttendanceReportGenerator({
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  console.log('📊 AttendanceReportGenerator props:', { visible, classId, subjectsCount: subjects.length, studentsCount: students.length });
+
   useEffect(() => {
+    console.log('📊 Setting up default values');
     // Set default dates (last 30 days)
     const end = new Date();
     const start = new Date();
@@ -64,10 +67,13 @@ export default function AttendanceReportGenerator({
     
     if (subjects.length > 0) {
       setSelectedSubject(subjects[0].id);
+      console.log('📊 Set default subject:', subjects[0].name);
     }
   }, [subjects]);
 
   const generateReport = async () => {
+    console.log('📊 Generating report with:', { selectedSubject, startDate, endDate, classId });
+    
     if (!selectedSubject || !startDate || !endDate) {
       Alert.alert('Error', 'Please select subject and date range');
       return;
@@ -75,7 +81,9 @@ export default function AttendanceReportGenerator({
 
     setLoading(true);
     try {
+      console.log('📊 Fetching attendance summary...');
       const summary = await getStudentAttendanceSummary(classId, selectedSubject, startDate, endDate);
+      console.log('📊 Received summary:', summary);
       
       const data: {[key: string]: ReportData} = {};
       summary.forEach(student => {
@@ -87,8 +95,10 @@ export default function AttendanceReportGenerator({
         };
       });
       
+      console.log('📊 Processed report data:', data);
       setReportData(data);
     } catch (error) {
+      console.error('❌ Error generating report:', error);
       Alert.alert('Error', 'Failed to generate report');
     } finally {
       setLoading(false);
@@ -121,174 +131,181 @@ export default function AttendanceReportGenerator({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={onClose}>
-          <ArrowLeft size={24} color="#000" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Attendance Report</Text>
-          <Text style={styles.headerSubtitle}>Generate detailed reports</Text>
-        </View>
-        <TouchableOpacity style={styles.exportButton} onPress={exportReport}>
-          <Download size={20} color="#007AFF" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Filters */}
-        <View style={styles.filtersSection}>
-          <Text style={styles.sectionTitle}>Report Filters</Text>
-          
-          {/* Subject Selector */}
-          <View style={styles.filterItem}>
-            <Text style={styles.filterLabel}>Subject</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {subjects.map((subject) => (
-                <TouchableOpacity
-                  key={subject.id}
-                  style={[
-                    styles.subjectChip,
-                    selectedSubject === subject.id && styles.selectedSubjectChip
-                  ]}
-                  onPress={() => setSelectedSubject(subject.id)}
-                >
-                  <Text style={[
-                    styles.subjectChipText,
-                    selectedSubject === subject.id && styles.selectedSubjectChipText
-                  ]}>
-                    {subject.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={onClose}>
+              <ArrowLeft size={24} color="#000" />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>Attendance Report</Text>
+              <Text style={styles.headerSubtitle}>Generate detailed reports</Text>
+            </View>
+            <TouchableOpacity style={styles.exportButton} onPress={exportReport}>
+              <Download size={20} color="#007AFF" />
+            </TouchableOpacity>
           </View>
 
-          {/* Date Range */}
-          <View style={styles.filterItem}>
-            <Text style={styles.filterLabel}>Date Range</Text>
-            <View style={styles.dateContainer}>
-              <View style={styles.dateInput}>
-                <Calendar size={16} color="#666" />
-                <Text style={styles.dateText}>{startDate}</Text>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {/* Filters */}
+            <View style={styles.filtersSection}>
+              <Text style={styles.sectionTitle}>Report Filters</Text>
+              
+              {/* Subject Selector */}
+              <View style={styles.filterItem}>
+                <Text style={styles.filterLabel}>Subject</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {subjects.map((subject) => (
+                    <TouchableOpacity
+                      key={subject.id}
+                      style={[
+                        styles.subjectChip,
+                        selectedSubject === subject.id && styles.selectedSubjectChip
+                      ]}
+                      onPress={() => setSelectedSubject(subject.id)}
+                    >
+                      <Text style={[
+                        styles.subjectChipText,
+                        selectedSubject === subject.id && styles.selectedSubjectChipText
+                      ]}>
+                        {subject.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </View>
-              <Text style={styles.dateSeparator}>to</Text>
-              <View style={styles.dateInput}>
-                <Calendar size={16} color="#666" />
-                <Text style={styles.dateText}>{endDate}</Text>
-              </View>
-            </View>
-          </View>
 
-          {/* Generate Button */}
-          <TouchableOpacity
-            style={styles.generateButton}
-            onPress={generateReport}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <BarChart3 size={20} color="#fff" />
-                <Text style={styles.generateButtonText}>Generate Report</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Report Results */}
-        {Object.keys(reportData).length > 0 && (
-          <View style={styles.resultsSection}>
-            <Text style={styles.sectionTitle}>Attendance Summary</Text>
-            
-            {/* Overall Stats */}
-            <View style={styles.overallStats}>
-              <View style={styles.statCard}>
-                <Users size={24} color="#007AFF" />
-                <Text style={styles.statNumber}>{students.length}</Text>
-                <Text style={styles.statLabel}>Total Students</Text>
-              </View>
-              <View style={styles.statCard}>
-                <CheckCircle size={24} color="#34C759" />
-                <Text style={styles.statNumber}>
-                  {Object.values(reportData).filter(d => d.attendancePercentage >= 75).length}
-                </Text>
-                <Text style={styles.statLabel}>Good Attendance</Text>
-              </View>
-              <View style={styles.statCard}>
-                <XCircle size={24} color="#FF3B30" />
-                <Text style={styles.statNumber}>
-                  {Object.values(reportData).filter(d => d.attendancePercentage < 75).length}
-                </Text>
-                <Text style={styles.statLabel}>Needs Attention</Text>
-              </View>
-            </View>
-
-            {/* Student Details */}
-            <View style={styles.studentDetails}>
-              <Text style={styles.subsectionTitle}>Student Details</Text>
-              {students.map((student) => {
-                const data = reportData[student.id];
-                if (!data) return null;
-
-                return (
-                  <View key={student.id} style={styles.studentReportCard}>
-                    <View style={styles.studentInfo}>
-                      <View style={styles.studentAvatar}>
-                        <Text style={styles.avatarText}>
-                          {student.name.charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
-                      <View style={styles.studentInfoDetails}>
-                        <Text style={styles.studentName}>{student.name}</Text>
-                        <Text style={styles.studentSection}>Section {student.section}</Text>
-                      </View>
-                    </View>
-                    
-                    <View style={styles.attendanceStats}>
-                      <View style={styles.attendanceBar}>
-                        <View 
-                          style={[
-                            styles.attendanceFill,
-                            { 
-                              width: `${data.attendancePercentage}%`,
-                              backgroundColor: getAttendanceColor(data.attendancePercentage)
-                            }
-                          ]} 
-                        />
-                      </View>
-                      <View style={styles.attendanceNumbers}>
-                        <Text style={styles.attendancePercentage}>
-                          {data.attendancePercentage.toFixed(1)}%
-                        </Text>
-                        <Text style={styles.attendanceStatus}>
-                          {getAttendanceStatus(data.attendancePercentage)}
-                        </Text>
-                      </View>
-                    </View>
-                    
-                    <View style={styles.detailedStats}>
-                      <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Present</Text>
-                        <Text style={styles.detailValue}>{data.presentDays}</Text>
-                      </View>
-                      <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Absent</Text>
-                        <Text style={styles.detailValue}>{data.absentDays}</Text>
-                      </View>
-                      <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Total Days</Text>
-                        <Text style={styles.detailValue}>{data.totalDays}</Text>
-                      </View>
-                    </View>
+              {/* Date Range */}
+              <View style={styles.filterItem}>
+                <Text style={styles.filterLabel}>Date Range</Text>
+                <View style={styles.dateContainer}>
+                  <View style={styles.dateInput}>
+                    <Calendar size={16} color="#666" />
+                    <Text style={styles.dateText}>{startDate}</Text>
                   </View>
-                );
-              })}
+                  <Text style={styles.dateSeparator}>to</Text>
+                  <View style={styles.dateInput}>
+                    <Calendar size={16} color="#666" />
+                    <Text style={styles.dateText}>{endDate}</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Generate Button */}
+              <TouchableOpacity
+                style={styles.generateButton}
+                onPress={generateReport}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <BarChart3 size={20} color="#fff" />
+                    <Text style={styles.generateButtonText}>Generate Report</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
-          </View>
-        )}
-      </ScrollView>
+
+            {/* Report Results */}
+            {Object.keys(reportData).length > 0 ? (
+              <View style={styles.resultsSection}>
+                <Text style={styles.sectionTitle}>Attendance Summary</Text>
+                
+                {/* Overall Stats */}
+                <View style={styles.overallStats}>
+                  <View style={styles.statCard}>
+                    <Users size={24} color="#007AFF" />
+                    <Text style={styles.statNumber}>{students.length}</Text>
+                    <Text style={styles.statLabel}>Total Students</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <CheckCircle size={24} color="#34C759" />
+                    <Text style={styles.statNumber}>
+                      {Object.values(reportData).filter(d => d.attendancePercentage >= 75).length}
+                    </Text>
+                    <Text style={styles.statLabel}>Good Attendance</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <XCircle size={24} color="#FF3B30" />
+                    <Text style={styles.statNumber}>
+                      {Object.values(reportData).filter(d => d.attendancePercentage < 75).length}
+                    </Text>
+                    <Text style={styles.statLabel}>Needs Attention</Text>
+                  </View>
+                </View>
+
+                {/* Student Details */}
+                <View style={styles.studentDetails}>
+                  <Text style={styles.subsectionTitle}>Student Details</Text>
+                  {students.map((student) => {
+                    const data = reportData[student.id];
+                    if (!data) return null;
+
+                    return (
+                      <View key={student.id} style={styles.studentReportCard}>
+                        <View style={styles.studentInfo}>
+                          <View style={styles.studentAvatar}>
+                            <Text style={styles.avatarText}>
+                              {student.name.charAt(0).toUpperCase()}
+                            </Text>
+                          </View>
+                          <View style={styles.studentInfoDetails}>
+                            <Text style={styles.studentName}>{student.name}</Text>
+                            <Text style={styles.studentSection}>Section {student.section}</Text>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.attendanceStats}>
+                          <View style={styles.attendanceBar}>
+                            <View 
+                              style={[
+                                styles.attendanceFill,
+                                { 
+                                  width: `${data.attendancePercentage}%`,
+                                  backgroundColor: getAttendanceColor(data.attendancePercentage)
+                                }
+                              ]} 
+                            />
+                          </View>
+                          <View style={styles.attendanceNumbers}>
+                            <Text style={styles.attendancePercentage}>
+                              {data.attendancePercentage.toFixed(1)}%
+                            </Text>
+                            <Text style={styles.attendanceStatus}>
+                              {getAttendanceStatus(data.attendancePercentage)}
+                            </Text>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.detailedStats}>
+                          <View style={styles.detailItem}>
+                            <Text style={styles.detailLabel}>Present</Text>
+                            <Text style={styles.detailValue}>{data.presentDays}</Text>
+                          </View>
+                          <View style={styles.detailItem}>
+                            <Text style={styles.detailLabel}>Absent</Text>
+                            <Text style={styles.detailValue}>{data.absentDays}</Text>
+                          </View>
+                          <View style={styles.detailItem}>
+                            <Text style={styles.detailLabel}>Total Days</Text>
+                            <Text style={styles.detailValue}>{data.totalDays}</Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : (
+              <View style={styles.resultsSection}>
+                <Text style={styles.sectionTitle}>No Report Data</Text>
+                <Text style={styles.noDataText}>
+                  Click "Generate Report" to create an attendance report for the selected subject and date range.
+                </Text>
+              </View>
+            )}
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -313,6 +330,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 8,
+    overflow: 'hidden', // Ensure content doesn't overflow
   },
   container: {
     flex: 1,
@@ -564,5 +582,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#000',
+  },
+  noDataText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
   },
 }); 

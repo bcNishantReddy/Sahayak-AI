@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import TermsAndConditions from '@/components/TermsAndConditions';
 import PrivacyPolicy from '@/components/PrivacyPolicy';
+import LanguageSelector from '@/components/LanguageSelector';
 import {
   View,
   Text,
@@ -20,10 +21,12 @@ import { StorageService } from '@/utils/storage';
 import { useRouter } from 'expo-router';
 import SahayakLogo from '@/components/SahayakLogo';
 import { NCERT_DATABASE } from '@/types';
-import { db } from '@/utils/firebase';
+import { auth, db } from '@/utils/firebase';
 import { setDoc, doc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import FeatureTour, { FeatureTourStep } from '@/components/FeatureTour';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 
 const CLASSES = [
   'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6',
@@ -32,6 +35,7 @@ const CLASSES = [
 const LANGUAGES = ['English', 'Hindi', 'Bengali', 'Tamil', 'Telugu', 'Marathi', 'Gujarati', 'Kannada', 'Malayalam', 'Punjabi'];
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [profileModal, setProfileModal] = useState(false);
@@ -47,6 +51,7 @@ export default function SettingsScreen() {
   const [editTextbooks, setEditTextbooks] = useState<string[]>([]);
   const [showTour, setShowTour] = React.useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   React.useEffect(() => {
     loadUserData();
@@ -121,21 +126,23 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            await StorageService.clearAll();
-            router.replace('/auth/login');
-          }
-        },
-      ]
-    );
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      await signOut(auth);
+      await StorageService.clearAll();
+      setShowLogoutModal(false);
+      router.replace('/auth/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const handleTourFinish = async () => {
@@ -245,12 +252,18 @@ export default function SettingsScreen() {
               thumbColor={darkMode ? '#fff' : '#000'}
             />
           </View>
-          <SettingItem
-            icon={FileText}
-            title="Preferred Language"
-            subtitle={user?.preferredLanguage || 'English'}
-            onPress={() => setLanguageModal(true)}
-          />
+          <View style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <View style={styles.iconContainer}>
+                <FileText size={20} color="#000" />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>{t('settings.language')}</Text>
+                <Text style={styles.settingSubtitle}>{t('settings.selectLanguage')}</Text>
+              </View>
+            </View>
+            <LanguageSelector />
+          </View>
         </View>
 
         {/* About */}
@@ -386,33 +399,7 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
-      {/* Language Modal */}
-      <Modal visible={languageModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Preferred Language</Text>
-            <ScrollView style={{ maxHeight: 200 }}>
-              {LANGUAGES.map(lang => (
-                <TouchableOpacity
-                  key={lang}
-                  style={[styles.classOption, editLanguage === lang && styles.selectedClassOption]}
-                  onPress={() => setEditLanguage(lang)}
-                >
-                  <Text style={[styles.classOptionText, editLanguage === lang && styles.selectedClassOptionText]}>{lang}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <View style={styles.modalActions}>
-              <Pressable style={styles.modalButton} onPress={() => setLanguageModal(false)}>
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable style={styles.modalButton} onPress={handleLanguageSave}>
-                <Text style={styles.modalButtonText}>Save</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+
 
       {/* Uploaded Textbooks Modal */}
       <Modal visible={textbookModal} transparent animationType="slide">
@@ -469,7 +456,30 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
-      </Modal>
+              </Modal>
+
+        {/* Logout Confirmation Modal */}
+        <Modal visible={showLogoutModal} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Logout</Text>
+              <Text style={{ color: '#666', marginBottom: 20 }}>
+                Are you sure you want to logout?
+              </Text>
+              <View style={styles.modalActions}>
+                <TouchableOpacity style={styles.modalButton} onPress={cancelLogout}>
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, { marginLeft: 10 }]} 
+                  onPress={confirmLogout}
+                >
+                  <Text style={[styles.modalButtonText, { color: '#ff3b30' }]}>Logout</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
     </SafeAreaView>
   );
 }

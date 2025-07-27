@@ -28,14 +28,10 @@ export default function WelcomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <LogOut size={20} color="#000" />
-      </TouchableOpacity>
-      <View style={styles.content}>
+      <View style={styles.centeredContent}>
         <View style={styles.logoContainer}>
           <SahayakLogo size={100} showText={true} color="#000000" />
         </View>
-        
         <View style={styles.featuresContainer}>
           <View style={styles.feature}>
             <FileText size={24} color="#000" style={styles.featureIcon} />
@@ -54,11 +50,9 @@ export default function WelcomeScreen() {
             <Text style={styles.featureText}>Educational storytelling</Text>
           </View>
         </View>
-
         <Text style={styles.description}>
           Designed specifically for Indian school teachers to create amazing classroom resources with AI.
         </Text>
-
         <TouchableOpacity 
           style={styles.getStartedButton}
           onPress={() => router.push('/onboarding/class-selection')}
@@ -66,6 +60,9 @@ export default function WelcomeScreen() {
           <Text style={styles.getStartedText}>Get Started</Text>
         </TouchableOpacity>
       </View>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <LogOut size={20} color="#000" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -77,19 +74,26 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     position: 'absolute',
-    top: 20,
-    left: 20,
+    bottom: 40,
+    right: 20,
     zIndex: 10,
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 8,
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
-  content: {
+  centeredContent: {
     flex: 1,
-    paddingHorizontal: 30,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 30,
   },
   logoContainer: {
     marginBottom: 60,
@@ -112,26 +116,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000000',
     flex: 1,
-    fontFamily: 'Poppins-Regular',
   },
   description: {
-    fontSize: 16,
-    color: '#666666',
+    fontSize: 15,
+    color: '#666',
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 50,
-    fontFamily: 'Poppins-Regular',
+    marginBottom: 30,
+    marginHorizontal: 10,
   },
   getStartedButton: {
-    backgroundColor: '#000000',
-    paddingHorizontal: 40,
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: '#000',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    marginTop: 10,
   },
   getStartedText: {
-    fontSize: 18,
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
-    fontFamily: 'Poppins-SemiBold',
   },
 });

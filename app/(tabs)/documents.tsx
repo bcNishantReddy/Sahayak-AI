@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,43 +8,53 @@ import {
   SafeAreaView,
   TextInput,
   Modal,
+  Alert,
+  Linking,
+  ActivityIndicator,
 } from 'react-native';
-import { Search, Filter, Calendar, BookOpen, X, Eye, HelpCircle, FileText as LucideFileText, Book } from 'lucide-react-native';
-import { StorageService } from '@/utils/storage';
+import { Search, Filter, Calendar, BookOpen, X, Eye, HelpCircle, FileText as LucideFileText, Book, ExternalLink, Image, Video, Music, ChevronDown } from 'lucide-react-native';
+import { StorageService, Document } from '@/utils/storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import FeatureTour, { FeatureTourStep } from '@/components/FeatureTour';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-
-interface Document {
-  id: string;
-  title: string;
-  type: 'worksheet' | 'quiz' | 'lesson-plan' | 'story';
-  class: string;
-  subject: string;
-  content: string;
-  questions?: any[];
-  createdAt: Date;
-}
-
-const documentTypes = [
-  { key: 'all', label: 'All' },
-  { key: 'worksheet', label: 'Worksheets' },
-  { key: 'quiz', label: 'Quizzes' },
-  { key: 'lesson-plan', label: 'Lesson Plans' },
-  { key: 'visual-aids', label: 'Visual Aids' },
-];
+import { auth } from '@/utils/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, query, orderBy, onSnapshot, where } from 'firebase/firestore';
+import { db } from '@/utils/firebase';
+import { useTranslation } from 'react-i18next';
 
 export default function DocumentsScreen() {
+  const { t } = useTranslation();
+  
+  const documentTypes = [
+    { key: 'all', label: 'All Documents' },
+    { key: 'worksheets', label: 'Worksheets' },
+    { key: 'quizzes', label: 'Quizzes' },
+    { key: 'lesson_plans', label: 'Lesson Plans' },
+    { key: 'images', label: 'Images' },
+    { key: 'videos', label: 'Videos' },
+  ];
+  
   const [searchText, setSearchText] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [showTour, setShowTour] = React.useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Check authentication status
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
+    });
+    return unsubscribe;
+  }, []);
 
   React.useEffect(() => {
     (async () => {
@@ -61,8 +71,8 @@ export default function DocumentsScreen() {
 
   const tourSteps: FeatureTourStep[] = [
     {
-      title: 'Your Documents',
-      description: 'Find all your generated resources here. Filter, preview, and manage them easily.',
+      title: t('documents.title'),
+      description: t('documents.recentDocuments'),
       position: 'center',
       align: 'right',
     },
@@ -71,26 +81,84 @@ export default function DocumentsScreen() {
   useFocusEffect(
     useCallback(() => {
       loadDocuments();
-    }, [])
+    }, [selectedType])
   );
 
   const loadDocuments = async () => {
-    const docs = await StorageService.getDocuments();
-    setDocuments(docs);
+    setIsLoading(true);
+    try {
+      if (isAuthenticated) {
+        const user = auth.currentUser;
+        if (user) {
+          if (selectedType === 'all') {
+            // Load all documents from Google Cloud Storage
+            const cloudDocs = await StorageService.fetchCloudDocuments(user.uid);
+            console.log(`📁 Loaded ${cloudDocs.length} documents for user ${user.uid}`);
+            setDocuments(cloudDocs);
+          } else {
+            // Load specific document type
+            const typeDocs = await StorageService.getDocumentsByType(user.uid, selectedType);
+            console.log(`📁 Loaded ${typeDocs.length} ${selectedType} documents for user ${user.uid}`);
+            setDocuments(typeDocs);
+          }
+        }
+      } else {
+        // Load documents from local storage
+        const docs = await StorageService.getDocuments();
+        setDocuments(docs);
+      }
+    } catch (error) {
+      console.error('Error loading documents:', error);
+      Alert.alert('Error', 'Failed to load documents');
+      setDocuments([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const openDocumentPreview = (document: Document) => {
-    setSelectedDocument(document);
-    setShowPreview(true);
+  const openDocument = async (document: Document) => {
+    if (document.url) {
+      try {
+        console.log(`🔗 Opening document: ${document.title} - ${document.url}`);
+        
+        // Check if the URL can be opened
+        const supported = await Linking.canOpenURL(document.url);
+        
+        if (supported) {
+          await Linking.openURL(document.url);
+        } else {
+          Alert.alert(
+            'Cannot Open Document',
+            'This document type cannot be opened directly. Please download it first.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Copy Link', onPress: () => {
+                // In a real app, you'd copy to clipboard
+                Alert.alert('Link Copied', `Download link copied: ${document.url}`);
+              }}
+            ]
+          );
+        }
+      } catch (error) {
+        console.error('Error opening document:', error);
+        Alert.alert('Error', 'Failed to open document. Please try again.');
+      }
+    } else {
+      // For documents without URLs, show preview
+      setSelectedDocument(document);
+      setShowPreview(true);
+    }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'worksheet': return '#000000';
-      case 'quiz': return '#333333';
-      case 'lesson-plan': return '#666666';
-      case 'story': return '#999999';
-      default: return '#000000';
+      case 'worksheet': return '#28a745';
+      case 'quiz': return '#007bff';
+      case 'lesson-plan': return '#ffc107';
+      case 'image': return '#17a2b8';
+      case 'video': return '#dc3545';
+      case 'audio': return '#6f42c1';
+      default: return '#6c757d';
     }
   };
 
@@ -99,15 +167,17 @@ export default function DocumentsScreen() {
       case 'worksheet': return <BookOpen size={18} color="#000" style={{marginRight:4}} />;
       case 'quiz': return <HelpCircle size={18} color="#000" style={{marginRight:4}} />;
       case 'lesson-plan': return <BookOpen size={18} color="#000" style={{marginRight:4}} />;
-      case 'story': return <Book size={18} color="#000" style={{marginRight:4}} />;
+      case 'image': return <Image size={18} color="#000" style={{marginRight:4}} />;
+      case 'video': return <Video size={18} color="#000" style={{marginRight:4}} />;
+      case 'audio': return <Music size={18} color="#000" style={{marginRight:4}} />;
       default: return <LucideFileText size={18} color="#000" style={{marginRight:4}} />;
     }
   };
 
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.title.toLowerCase().includes(searchText.toLowerCase()) ||
-                         doc.subject.toLowerCase().includes(searchText.toLowerCase()) ||
-                         doc.class.toLowerCase().includes(searchText.toLowerCase());
+                         (doc.subject?.toLowerCase().includes(searchText.toLowerCase()) || false) ||
+                         (doc.class?.toLowerCase().includes(searchText.toLowerCase()) || false);
     const matchesType = selectedType === 'all' || doc.type === selectedType;
     return matchesSearch && matchesType;
   });
@@ -117,8 +187,14 @@ export default function DocumentsScreen() {
       <FeatureTour steps={tourSteps} visible={showTour} onFinish={handleTourFinish} />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Documents</Text>
-        <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(true)}>
-          <Filter size={22} color="#000" />
+        <TouchableOpacity 
+          style={styles.dropdownButton} 
+          onPress={() => setShowDropdown(!showDropdown)}
+        >
+          <Text style={styles.dropdownButtonText}>
+            {documentTypes.find(type => type.key === selectedType)?.label || 'All Documents'}
+          </Text>
+          <ChevronDown size={16} color="#000" />
         </TouchableOpacity>
       </View>
 
@@ -136,7 +212,7 @@ export default function DocumentsScreen() {
       </View>
 
       {/* Filter Modal */}
-      <Modal visible={showFilterModal} transparent animationType="fade">
+      <Modal visible={showDropdown} transparent animationType="fade">
         <View style={styles.filterModalOverlay}>
           <View style={styles.filterModalContent}>
             <Text style={styles.filterModalTitle}>Filter Documents</Text>
@@ -149,7 +225,7 @@ export default function DocumentsScreen() {
                 ]}
                 onPress={() => {
                   setSelectedType(type.key);
-                  setShowFilterModal(false);
+                  setShowDropdown(false);
                 }}
               >
                 <Text style={[
@@ -160,7 +236,7 @@ export default function DocumentsScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={styles.closeFilterButton} onPress={() => setShowFilterModal(false)}>
+            <TouchableOpacity style={styles.closeFilterButton} onPress={() => setShowDropdown(false)}>
               <Text style={styles.closeFilterButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
@@ -168,58 +244,70 @@ export default function DocumentsScreen() {
       </Modal>
 
       <ScrollView style={styles.documentsContainer} showsVerticalScrollIndicator={false}>
-        {filteredDocuments.map((doc) => (
-          <TouchableOpacity 
-            key={doc.id} 
-            style={styles.documentCard}
-            onPress={() => openDocumentPreview(doc)}
-          >
-            <View style={styles.cardHeader}>
-              <View style={styles.cardTitleContainer}>
-                {getTypeIcon(doc.type)}
-                <Text style={styles.cardTitle}>{doc.title}</Text>
-              </View>
-              <View style={[styles.typeChip, { backgroundColor: getTypeColor(doc.type) }]}>
-                <Text style={styles.typeChipText}>{doc.type.replace('-', ' ')}</Text>
-              </View>
-            </View>
-            
-            <View style={styles.cardContent}>
-              <View style={styles.cardMeta}>
-                <Text style={styles.cardMetaText}>
-                  <BookOpen size={14} color="#999999" /> {doc.class} <Text style={{fontSize:18, color:'#999', marginHorizontal:2}}>·</Text> {doc.subject}
-                </Text>
-                <Text style={styles.cardMetaText}>
-                  <Calendar size={14} color="#999999" /> {(() => {
-                    let dateObj = doc.createdAt;
-                    if (!dateObj) return '-';
-                    if (typeof dateObj === 'string' || typeof dateObj === 'number') {
-                      dateObj = new Date(dateObj);
-                    }
-                    return dateObj && typeof dateObj.toLocaleDateString === 'function'
-                      ? dateObj.toLocaleDateString()
-                      : '-';
-                  })()}
-                </Text>
-              </View>
-              
-              {doc.questions && doc.questions.length > 0 && (
-                <Text style={styles.questionsText}>{doc.questions.length} questions</Text>
-              )}
-              
-              <TouchableOpacity style={styles.previewButton}>
-                <Eye size={16} color="#000000" />
-                <Text style={styles.previewButtonText}>Preview</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        ))}
-        
-        {filteredDocuments.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No documents found</Text>
-            <Text style={styles.emptyStateSubtext}>Start a chat to generate your first document</Text>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#0000ff" />
+            <Text style={styles.loadingText}>Loading documents...</Text>
           </View>
+        ) : filteredDocuments.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              {selectedType === 'all' ? 'No documents found' : `No ${selectedType.replace('_', ' ')} found`}
+            </Text>
+            <Text style={styles.emptyStateSubtext}>
+              {selectedType === 'all' 
+                ? 'Start a chat to generate your first document' 
+                : `No ${selectedType.replace('_', ' ')} have been generated yet. Try generating some in the chat!`
+              }
+            </Text>
+          </View>
+        ) : (
+          filteredDocuments.map((doc) => (
+            <TouchableOpacity 
+              key={doc.id} 
+              style={styles.documentCard}
+              onPress={() => openDocument(doc)}
+            >
+              <View style={styles.cardHeader}>
+                <View style={styles.cardTitleContainer}>
+                  {getTypeIcon(doc.type)}
+                  <Text style={styles.cardTitle}>{doc.title}</Text>
+                </View>
+                <View style={[styles.typeChip, { backgroundColor: getTypeColor(doc.type) }]}>
+                  <Text style={styles.typeChipText}>{doc.type.replace('-', ' ')}</Text>
+                </View>
+              </View>
+              
+              <View style={styles.cardContent}>
+                <View style={styles.cardMeta}>
+                  <Text style={styles.cardMetaText}>
+                    {doc.class && <BookOpen size={14} color="#999999" />} {doc.class} {doc.subject && <Text style={{fontSize:18, color:'#999', marginHorizontal:2}}>·</Text>} {doc.subject}
+                  </Text>
+                  <Text style={styles.cardMetaText}>
+                    <Calendar size={14} color="#999999" /> {(() => {
+                      let dateObj = doc.createdAt;
+                      if (!dateObj) return '-';
+                      if (typeof dateObj === 'string' || typeof dateObj === 'number') {
+                        dateObj = new Date(dateObj);
+                      }
+                      return dateObj && typeof dateObj.toLocaleDateString === 'function'
+                        ? dateObj.toLocaleDateString()
+                        : '-';
+                    })()}
+                  </Text>
+                </View>
+                
+                {doc.questions && doc.questions.length > 0 && (
+                  <Text style={styles.questionsText}>{doc.questions.length} questions</Text>
+                )}
+                
+                <TouchableOpacity style={styles.previewButton} onPress={() => openDocument(doc)}>
+                  {doc.url ? <ExternalLink size={16} color="#000000" /> : <Eye size={16} color="#000000" />}
+                  <Text style={styles.previewButtonText}>{doc.url ? 'Open' : 'Preview'}</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          ))
         )}
       </ScrollView>
 
@@ -579,5 +667,34 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 16,
     fontWeight: '500',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
+    fontFamily: 'Poppins-Regular',
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  dropdownButtonText: {
+    fontSize: 16,
+    color: '#000000',
+    fontWeight: '500',
+    marginRight: 5,
+    fontFamily: 'Poppins-Medium',
   },
 });
