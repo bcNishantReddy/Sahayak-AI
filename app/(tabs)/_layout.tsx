@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { MessageCircle, FileText, Settings } from 'lucide-react-native';
+import { MessageCircle, FileText, Settings, ClipboardList } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -17,7 +17,6 @@ export default function TabLayout() {
           paddingTop: 10,
         },
         tabBarLabelStyle: {
-          // Removed custom font family
           fontSize: 12,
         },
       }}
@@ -37,6 +36,15 @@ export default function TabLayout() {
           title: 'Documents',
           tabBarIcon: ({ color, size }) => (
             <FileText size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="attendance"
+        options={{
+          title: 'Data',
+          tabBarIcon: ({ color, size }) => (
+            <ClipboardList size={size} color={color} />
           ),
         }}
       />

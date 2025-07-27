@@ -1,0 +1,295 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "classes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "teacherId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "students",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "classId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "teacherId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "students",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "teacherId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "subjects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "classId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "teacherId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "subjects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "teacherId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "attendance",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "classId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "subjectId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "attendance",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "classId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "subjectId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "attendance",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "classId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "subjectId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "attendance",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "studentId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+                {
+              "collectionGroup": "attendance",
+              "queryScope": "COLLECTION",
+              "fields": [
+                {
+                  "fieldPath": "teacherId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "timestamp",
+                  "order": "DESCENDING"
+                }
+              ]
+            },
+            {
+              "collectionGroup": "tests",
+              "queryScope": "COLLECTION",
+              "fields": [
+                {
+                  "fieldPath": "teacherId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "createdAt",
+                  "order": "DESCENDING"
+                }
+              ]
+            },
+            {
+              "collectionGroup": "tests",
+              "queryScope": "COLLECTION",
+              "fields": [
+                {
+                  "fieldPath": "classId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "teacherId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "createdAt",
+                  "order": "DESCENDING"
+                }
+              ]
+            },
+            {
+              "collectionGroup": "tests",
+              "queryScope": "COLLECTION",
+              "fields": [
+                {
+                  "fieldPath": "classId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "subjectId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "teacherId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "createdAt",
+                  "order": "DESCENDING"
+                }
+              ]
+            },
+            {
+              "collectionGroup": "grades",
+              "queryScope": "COLLECTION",
+              "fields": [
+                {
+                  "fieldPath": "teacherId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "timestamp",
+                  "order": "DESCENDING"
+                }
+              ]
+            },
+            {
+              "collectionGroup": "grades",
+              "queryScope": "COLLECTION",
+              "fields": [
+                {
+                  "fieldPath": "classId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "teacherId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "timestamp",
+                  "order": "DESCENDING"
+                }
+              ]
+            },
+            {
+              "collectionGroup": "grades",
+              "queryScope": "COLLECTION",
+              "fields": [
+                {
+                  "fieldPath": "testId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "timestamp",
+                  "order": "DESCENDING"
+                }
+              ]
+            },
+            {
+              "collectionGroup": "grades",
+              "queryScope": "COLLECTION",
+              "fields": [
+                {
+                  "fieldPath": "classId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "subjectId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "teacherId",
+                  "order": "ASCENDING"
+                },
+                {
+                  "fieldPath": "timestamp",
+                  "order": "DESCENDING"
+                }
+              ]
+            }
+          ],
+          "fieldOverrides": []
+        } 

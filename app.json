@@ -9,7 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bcnishantreddy.sahayakai",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "web": {
       "bundler": "metro",
@@ -29,6 +33,9 @@
       "eas": {
         "projectId": "94546b38-4915-4ba6-9a4a-21bd6ac0ecd9"
       }
+    },
+    "android": {
+      "package": "com.bcnishantreddy.sahayakai"
     }
   }
 }
